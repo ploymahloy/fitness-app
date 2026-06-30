@@ -1,0 +1,4 @@
+/target
+.env
+workout_tracker.db*
+main
