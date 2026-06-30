@@ -9,7 +9,8 @@ use tokio::net::TcpListener;
 #[tokio::main]
 async fn main() {
     let app = Router::new()
-        .route("/health", get(health_check_handler));
+        .route("/health", get(health_check_handler))
+        .route("/upload", get(upload_workout));
 
     println!("Server started successfully at 0.0.0.0:8080");
 
@@ -25,6 +26,14 @@ async fn health_check_handler() -> impl IntoResponse {
     let json_response = serde_json::json!({
         "status": "ok",
         "message": MESSAGE
+    });
+
+    Json(json_response)
+}
+
+async fn upload_workout() -> impl IntoResponse {
+    let json_response = serde_json::json!({
+        "message": "Workout uploaded successfully."
     });
 
     Json(json_response)
