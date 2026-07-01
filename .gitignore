@@ -1,4 +1,4 @@
 /target
 .env
-workout_tracker.db*
+fitness_app.db*
 main
