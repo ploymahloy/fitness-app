@@ -1,8 +1,7 @@
 use axum::{
-    Router, 
-    Json,
-    routing::{get, post}, 
-    response::IntoResponse
+    Json, Router,
+    response::IntoResponse,
+    routing::{get, post},
 };
 use tokio::net::TcpListener;
 
