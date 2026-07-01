@@ -1,7 +1,7 @@
 use axum::{
     Router, 
     Json,
-    routing::get, 
+    routing::{get, post}, 
     response::IntoResponse
 };
 use tokio::net::TcpListener;
@@ -10,7 +10,7 @@ use tokio::net::TcpListener;
 async fn main() {
     let app = Router::new()
         .route("/health", get(health_check_handler))
-        .route("/upload", get(upload_workout));
+        .route("/upload", post(upload_workout));
 
     println!("Server started successfully at 0.0.0.0:8080");
 
