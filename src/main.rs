@@ -31,7 +31,6 @@ async fn main() {
 
     let app = Router::new()
         .route("/health", get(health_check_handler))
-        .route("/upload", post(upload_workout))
         .route("/data", get(get_data))
         .route("/upload/cardio", post(upload_cardio))
         .with_state(state);
@@ -50,7 +49,7 @@ async fn health_check_handler() -> impl IntoResponse {
         "message": "API Services"
     });
 
-    Json(json_response)
+    let _ = Json(json_response);
 }
 
 async fn upload_cardio(State(state): State<AppState>) -> impl IntoResponse {
