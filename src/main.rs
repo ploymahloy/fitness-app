@@ -33,6 +33,7 @@ async fn main() {
         .route("/health", get(health_check_handler))
         .route("/upload", post(upload_workout))
         .route("/data", get(get_data))
+        .route("/upload/cardio", post(upload_cardio))
         .with_state(state);
 
     println!("Server started successfully at 0.0.0.0:8080");
@@ -52,12 +53,57 @@ async fn health_check_handler() -> impl IntoResponse {
     Json(json_response)
 }
 
-async fn upload_workout() -> impl IntoResponse {
-    let json_response = serde_json::json!({
-        "message": "Workout uploaded successfully."
-    });
+async fn upload_cardio(State(state): State<AppState>) -> impl IntoResponse {
+    let result = sqlx::query!(
+        "INSERT INTO cardio_session (
+            date, 
+            exercise_name, 
+            duration_in_minutes, 
+            after_weight_session
+        ) VALUES (
+            '2026-07-07 18:30:00', 
+            'Treadmill HIIT', 
+            45, 
+            1
+        );",
+    )
+    .execute(&state.db)
+    .await;
 
-    Json(json_response)
+    match result {
+        Ok(_) => (
+            StatusCode::CREATED, // 201
+            Json(serde_json::json!({ "message": "Exercise created successfully" })),
+        ),
+
+        Err(sqlx::Error::Database(db_err)) => {
+            if db_err.code().as_deref() == Some("23505") {
+                (
+                    StatusCode::CONFLICT, // 409
+                    Json(
+                        serde_json::json!({ "error": "An exercise with this name already exists" }),
+                    ),
+                )
+            } else if db_err.code().as_deref() == Some("42501") {
+                (
+                    StatusCode::FORBIDDEN, // 403
+                    Json(
+                        serde_json::json!({ "error": "You do not have permission to modify this resource" }),
+                    ),
+                )
+            } else {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR, // 500
+                    Json(serde_json::json!({ "error": "Database constraint violation" })),
+                )
+            }
+        }
+
+        Err(err) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({ "error": format!("Internal server error: {}", err) })),
+        ),
+    }
 }
 
 async fn get_data(State(state): State<AppState>) -> impl IntoResponse {
