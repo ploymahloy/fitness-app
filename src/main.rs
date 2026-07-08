@@ -3,7 +3,7 @@ use axum::{
     extract::State,
     http::StatusCode,
     response::IntoResponse,
-    routing::{get, post},
+    routing::{get, post}
 };
 use serde::Serialize;
 use sqlx::{Pool, Sqlite, sqlite::SqlitePoolOptions};
@@ -11,12 +11,12 @@ use tokio::net::TcpListener;
 
 #[derive(Serialize, sqlx::FromRow)]
 struct Log {
-    date: String,
+    date: String
 }
 
 #[derive(Clone)]
 struct AppState {
-    db: Pool<Sqlite>,
+    db: Pool<Sqlite>
 }
 
 #[tokio::main]
@@ -63,7 +63,7 @@ async fn upload_cardio(State(state): State<AppState>) -> impl IntoResponse {
     match result {
         Ok(_) => (
             StatusCode::CREATED, // 201
-            Json(serde_json::json!({ "message": "Exercise created successfully" })),
+            Json(serde_json::json!({ "message": "Exercise created successfully" }))
         ),
 
         Err(sqlx::Error::Database(db_err)) => {
@@ -71,28 +71,28 @@ async fn upload_cardio(State(state): State<AppState>) -> impl IntoResponse {
                 (
                     StatusCode::CONFLICT, // 409
                     Json(
-                        serde_json::json!({ "error": "An exercise with this name already exists" }),
-                    ),
+                        serde_json::json!({ "error": "An exercise with this name already exists" })
+                    )
                 )
             } else if db_err.code().as_deref() == Some("42501") {
                 (
                     StatusCode::FORBIDDEN, // 403
                     Json(
-                        serde_json::json!({ "error": "You do not have permission to modify this resource" }),
-                    ),
+                        serde_json::json!({ "error": "You do not have permission to modify this resource" })
+                    )
                 )
             } else {
                 (
                     StatusCode::INTERNAL_SERVER_ERROR, // 500
-                    Json(serde_json::json!({ "error": "Database constraint violation" })),
+                    Json(serde_json::json!({ "error": "Database constraint violation" }))
                 )
             }
         }
 
         Err(err) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({ "error": format!("Internal server error: {}", err) })),
-        ),
+            Json(serde_json::json!({ "error": format!("Internal server error: {}", err) }))
+        )
     }
 }
 
@@ -104,11 +104,11 @@ async fn get_data(State(state): State<AppState>) -> impl IntoResponse {
     match result {
         Ok(logs) => (
             StatusCode::OK,
-            Json(serde_json::to_value(logs).expect("failed to serialize logs")),
+            Json(serde_json::to_value(logs).expect("failed to serialize logs"))
         ),
         Err(err) => (
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({ "error": format!("{}", err) })),
-        ),
+            Json(serde_json::json!({ "error": format!("{}", err) }))
+        )
     }
 }
