@@ -54,18 +54,9 @@ async fn health_check_handler() -> impl IntoResponse {
 
 async fn upload_cardio(State(state): State<AppState>) -> impl IntoResponse {
     let result = sqlx::query!(
-        "INSERT INTO cardio_session (
-            date, 
-            exercise_name, 
-            duration_in_minutes, 
-            after_weight_session
-        ) VALUES (
-            '2026-07-07 18:30:00', 
-            'Treadmill HIIT', 
-            45, 
-            1
-        );",
-    )
+        "INSERT INTO cardio_session (date, exercise_name, duration_in_minutes, after_weight_session)
+        VALUES ('2026-07-01', 'Treadmill HIIT', 45, 1);",
+        )
     .execute(&state.db)
     .await;
 
