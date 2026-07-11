@@ -10,10 +10,10 @@
 
 ### Learning Rust through CRUD development
 
-- [x] Build API server `/health` [endpoint](https://github.com/ploymahloy/fitness-app/blob/master/src/main.rs#L46-L53) 
-- [x] Build 'read' [endpoint](https://github.com/ploymahloy/fitness-app/blob/master/src/main.rs#L99-L114)
-- [x] Build 'create [endpoint](https://github.com/ploymahloy/fitness-app/blob/master/src/main.rs#L55-L97)
-- [x] Build 'update' [endpoint](https://github.com/ploymahloy/fitness-app/blob/master/src/main.rs#L121-L134)
+- [x] Build API server `/health` endpoint
+- [x] Build 'read' endpoint
+- [x] Build 'create endpoint
+- [x] Build 'update' endpoint
 - [x] Build 'delete' endpoint
 
 ### UI
