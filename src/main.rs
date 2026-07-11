@@ -3,7 +3,7 @@ use axum::{
     extract::State,
     http::StatusCode,
     response::IntoResponse,
-    routing::{get, post}
+    routing::{get, patch, post}
 };
 use sqlx::{Pool, Sqlite, sqlite::SqlitePoolOptions};
 use tokio::net::TcpListener;
@@ -27,6 +27,7 @@ async fn main() {
         .route("/health", get(health_check_handler))
         .route("/data", get(get_data))
         .route("/upload/cardio", post(upload_cardio))
+        .route("/update", patch(update_data))
         .with_state(state);
 
     println!("Server started successfully at 0.0.0.0:8080");
@@ -115,4 +116,19 @@ async fn get_data(State(state): State<AppState>) -> impl IntoResponse {
             Json(serde_json::json!({ "error": format!("{}", err) }))
         )
     }
+}
+
+async fn update_data(State(state): State<AppState>) -> impl IntoResponse {
+    let rows_affected = sqlx::query!(
+        "UPDATE cardio_session
+        SET exercise_name = 'Quiditch',
+            duration_in_minutes = 120 
+        WHERE id = 3"
+    )
+    .execute(&state.db)
+    .await
+    .expect("Update failed.")
+    .rows_affected();
+
+    println!("Rows affected: {}", rows_affected);
 }

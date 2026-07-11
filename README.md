@@ -13,7 +13,7 @@
 - [x] Build API server `/health` [endpoint](https://github.com/ploymahloy/fitness-app/blob/master/src/main.rs#L46-L53) 
 - [x] Build 'read' [endpoint](https://github.com/ploymahloy/fitness-app/blob/master/src/main.rs#L99-L114)
 - [x] Build 'create [endpoint](https://github.com/ploymahloy/fitness-app/blob/master/src/main.rs#L55-L97)
-- [ ] Build 'update' endpoint
+- [x] Build 'update' [endpoint](https://github.com/ploymahloy/fitness-app/blob/master/src/main.rs#L121-L134)
 - [ ] Build 'delete' endpoint
 
 ### UI
