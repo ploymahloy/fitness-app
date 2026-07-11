@@ -5,14 +5,8 @@ use axum::{
     response::IntoResponse,
     routing::{get, post}
 };
-use serde::Serialize;
 use sqlx::{Pool, Sqlite, sqlite::SqlitePoolOptions};
 use tokio::net::TcpListener;
-
-#[derive(Serialize, sqlx::FromRow)]
-struct Log {
-    date: String
-}
 
 #[derive(Clone)]
 struct AppState {
@@ -97,14 +91,24 @@ async fn upload_cardio(State(state): State<AppState>) -> impl IntoResponse {
 }
 
 async fn get_data(State(state): State<AppState>) -> impl IntoResponse {
-    let result = sqlx::query_as::<_, Log>("SELECT date FROM daily_log")
+    let result = sqlx::query!("SELECT * FROM cardio_session")
         .fetch_all(&state.db)
         .await;
 
     match result {
-        Ok(logs) => (
+        Ok(data) => (
             StatusCode::OK,
-            Json(serde_json::to_value(logs).expect("failed to serialize logs"))
+            Json(serde_json::json!(
+                data.iter()
+                    .map(|record| serde_json::json!({
+                        "id": record.id,
+                        "date": record.date,
+                        "exercise_name": record.exercise_name,
+                        "duration_in_minutes": record.duration_in_minutes,
+                        "after_weight_session": record.after_weight_session,
+                    }))
+                    .collect::<Vec<_>>()
+            ))
         ),
         Err(err) => (
             StatusCode::INTERNAL_SERVER_ERROR,
