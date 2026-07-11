@@ -14,7 +14,7 @@
 - [x] Build 'read' [endpoint](https://github.com/ploymahloy/fitness-app/blob/master/src/main.rs#L99-L114)
 - [x] Build 'create [endpoint](https://github.com/ploymahloy/fitness-app/blob/master/src/main.rs#L55-L97)
 - [x] Build 'update' [endpoint](https://github.com/ploymahloy/fitness-app/blob/master/src/main.rs#L121-L134)
-- [ ] Build 'delete' endpoint
+- [x] Build 'delete' endpoint
 
 ### UI
 
