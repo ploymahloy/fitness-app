@@ -8,15 +8,18 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=fitness-app"
+                    "--bin=fitness-app",
+                    "--manifest-path=${workspaceFolder}/server/Cargo.toml"
                 ],
                 "filter": {
                     "name": "fitness-app",
                     "kind": "bin"
-                }
+                },
+                "cwd": "${workspaceFolder}/server"
             },
             "args": [],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}/server",
+            "sourceLanguages": ["rust"]
         }
     ]
 }
