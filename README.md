@@ -19,10 +19,10 @@
 ### UI
 
 - CRUD operations:
-  - [ ] Add (create) entry
-  - [ ] View (read) entry
-  - [ ] Update entry 
-  - [ ] Delete entry
+  - [x] Add (create) entry
+  - [x] View (read) entry
+  - [x] Update entry 
+  - [x] Delete entry
 - Data display: --> GraphQL?
   - [ ] Statistics view (i.e. average daily protein intake)
   - [ ] Charts (i.e. cardio per week over time)
