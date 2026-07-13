@@ -45,7 +45,7 @@ async fn health_check_handler() -> impl IntoResponse {
         "message": "API Services"
     });
 
-    let _ = Json(json_response);
+    (StatusCode::OK, Json(json_response))
 }
 
 async fn upload_cardio(State(state): State<AppState>) -> impl IntoResponse {
@@ -120,24 +120,37 @@ async fn get_data(State(state): State<AppState>) -> impl IntoResponse {
 }
 
 async fn update_data(State(state): State<AppState>) -> impl IntoResponse {
-    let rows_affected = sqlx::query!(
+    let result = sqlx::query!(
         "UPDATE cardio_session
         SET exercise_name = 'Quiditch',
             duration_in_minutes = 120 
-        WHERE id = 3"
+        WHERE id = (SELECT MAX(id) FROM cardio_session);"
     )
     .execute(&state.db)
-    .await
-    .expect("Update failed.")
-    .rows_affected();
+    .await;
 
-    println!("Rows affected: {}", rows_affected);
+    match result {
+        Ok(res) if res.rows_affected() == 0 => (
+            StatusCode::NOT_FOUND, // 404
+            Json(serde_json::json!({ "error": "No records to update" }))
+        ),
+        Ok(_) => {
+            (
+                StatusCode::OK, // 200
+                Json(serde_json::json!({ "message": "Record updated successfully" }))
+            )
+        }
+        Err(err) => (
+            StatusCode::INTERNAL_SERVER_ERROR, // 500
+            Json(serde_json::json!({ "error": format!("Internal server error: {}", err) }))
+        )
+    }
 }
 
 async fn delete_record(State(state): State<AppState>) -> impl IntoResponse {
     let result = sqlx::query!(
         "DELETE FROM cardio_session
-         WHERE id = 3"
+         WHERE id = (SELECT MAX(id) FROM cardio_session);"
     )
     .execute(&state.db)
     .await;
