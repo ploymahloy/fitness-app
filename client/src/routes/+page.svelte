@@ -9,16 +9,6 @@
 		return `${year}-${month}-${day}`;
 	};
 
-	const formatDisplayDate = (dateString: string): string => {
-		const [year, month, day] = dateString.split('-').map(Number);
-		return new Date(year, month - 1, day).toLocaleDateString(undefined, {
-			weekday: 'short',
-			month: 'short',
-			day: 'numeric',
-			year: 'numeric'
-		});
-	};
-
 	const shiftDate = (dateString: string, days: number): string => {
 		const [year, month, day] = dateString.split('-').map(Number);
 		const date = new Date(year, month - 1, day);
@@ -75,11 +65,10 @@
 
 <main class="mx-auto flex min-h-screen max-w-md flex-col gap-6 p-4">
 	<header class="">
-		<p class="text-center text-sm text-gray-600">{formatDisplayDate(selectedDate)}</p>
 		<div class="flex items-center gap-2">
 			<button
 				type="button"
-				class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-300 text-lg"
+				class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-700 bg-gray-900 text-lg"
 				onclick={goToPreviousDay}
 				aria-label="Previous day"
 			>
@@ -87,13 +76,13 @@
 			</button>
 			<input
 				type="date"
-				class="h-11 min-w-0 flex-1 rounded-lg border border-gray-300 px-3 text-base"
+				class="h-11 min-w-0 flex-1 rounded-lg border border-gray-700 bg-gray-900 px-3 text-base text-gray-100"
 				value={selectedDate}
 				onchange={handleDateChange}
 			/>
 			<button
 				type="button"
-				class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-300 text-lg"
+				class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-700 bg-gray-900 text-lg"
 				onclick={goToNextDay}
 				aria-label="Next day"
 			>
@@ -103,37 +92,37 @@
 	</header>
 
 	{#if loading}
-		<p class="text-center text-gray-600">Loading...</p>
+		<p class="text-center text-gray-400">Loading...</p>
 	{:else if errorMessage}
-		<p class="text-center text-red-600">{errorMessage}</p>
+		<p class="text-center text-red-400">{errorMessage}</p>
 	{:else if dayData}
-		<section class="rounded-xl border border-gray-200 p-4">
+		<section class="rounded-xl border border-gray-800 bg-gray-900 p-4">
 			<h2 class="mb-3 text-lg font-medium">Nutrition</h2>
 
 			{#if hasNutrition}
 				<dl class="grid grid-cols-2 gap-4">
 					<div>
-						<dt class="text-sm text-gray-600">Calories</dt>
+						<dt class="text-sm text-gray-400">Calories</dt>
 						<dd class="text-2xl font-semibold">{dayData.nutrition.calories}</dd>
 					</div>
 					<div>
-						<dt class="text-sm text-gray-600">Protein</dt>
+						<dt class="text-sm text-gray-400">Protein</dt>
 						<dd class="text-2xl font-semibold">{dayData.nutrition.protein}g</dd>
 					</div>
 				</dl>
 			{:else}
-				<p class="text-gray-600">No nutrition logged</p>
+				<p class="text-gray-400">No nutrition logged</p>
 			{/if}
 		</section>
 
 		{#if dayData.cardio.length > 0}
-			<section class="rounded-xl border border-gray-200 p-4">
+			<section class="rounded-xl border border-gray-800 bg-gray-900 p-4">
 				<h2 class="mb-3 text-lg font-medium">Cardio</h2>
 				<ul class="flex flex-col gap-3">
 					{#each dayData.cardio as session}
 						<li class="flex items-center justify-between gap-4">
 							<span class="font-medium">{session.exercise_name}</span>
-							<span class="text-gray-600">
+							<span class="text-gray-400">
 								{session.duration_in_minutes ?? 0} min
 							</span>
 						</li>
@@ -143,7 +132,7 @@
 		{/if}
 
 		{#if dayData.weight_sessions.length > 0}
-			<section class="rounded-xl border border-gray-200 p-4">
+			<section class="rounded-xl border border-gray-800 bg-gray-900 p-4">
 				<h2 class="mb-3 text-lg font-medium">Weight Sessions</h2>
 				<ul class="flex flex-col gap-3">
 					{#each dayData.weight_sessions as session}
