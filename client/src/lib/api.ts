@@ -4,11 +4,15 @@ export type ApiError = {
 	status: number;
 };
 
-export function createApiError(message: string, status: number): ApiError {
+export const createApiError = (message: string, status: number): ApiError => {
 	return { type: 'api_error', message, status };
-}
+};
 
-export async function apiRequest(path: string, method: string, body?: unknown): Promise<unknown> {
+export const apiRequest = async (
+	path: string,
+	method: string,
+	body?: unknown
+): Promise<unknown> => {
 	let response: Response;
 
 	try {
@@ -43,4 +47,4 @@ export async function apiRequest(path: string, method: string, body?: unknown): 
 	} catch {
 		return null;
 	}
-}
+};

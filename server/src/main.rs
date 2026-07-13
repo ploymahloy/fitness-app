@@ -1,6 +1,6 @@
 use axum::{
     Json, Router,
-    extract::State,
+    extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
     routing::{delete, get, patch, post}
@@ -25,6 +25,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/health", get(health_check_handler))
+        .route("/day/{date}", get(get_day))
         .route("/data", get(get_data))
         .route("/upload/cardio", post(upload_cardio))
         .route("/update", patch(update_data))
@@ -88,6 +89,51 @@ async fn upload_cardio(State(state): State<AppState>) -> impl IntoResponse {
         Err(err) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(serde_json::json!({ "error": format!("Internal server error: {}", err) }))
+        )
+    }
+}
+
+async fn get_day(State(state): State<AppState>, Path(date): Path<String>) -> impl IntoResponse {
+    let nutrition = sqlx::query!(
+        "SELECT COALESCE(SUM(calories), 0) AS calories, COALESCE(SUM(protein), 0.0) AS protein
+         FROM nutrition WHERE date = ?",
+        date
+    )
+    .fetch_one(&state.db)
+    .await;
+
+    let cardio = sqlx::query!(
+        "SELECT exercise_name, duration_in_minutes FROM cardio_session WHERE date = ?",
+        date
+    )
+    .fetch_all(&state.db)
+    .await;
+
+    let weight_sessions = sqlx::query!("SELECT name FROM weight_session WHERE date = ?", date)
+        .fetch_all(&state.db)
+        .await;
+
+    match (nutrition, cardio, weight_sessions) {
+        (Ok(nutrition), Ok(cardio), Ok(weight_sessions)) => (
+            StatusCode::OK,
+            Json(serde_json::json!({
+                "date": date,
+                "nutrition": {
+                    "calories": nutrition.calories,
+                    "protein": nutrition.protein,
+                },
+                "cardio": cardio.iter().map(|record| serde_json::json!({
+                    "exercise_name": record.exercise_name,
+                    "duration_in_minutes": record.duration_in_minutes,
+                })).collect::<Vec<_>>(),
+                "weight_sessions": weight_sessions.iter().map(|record| serde_json::json!({
+                    "name": record.name,
+                })).collect::<Vec<_>>(),
+            }))
+        ),
+        _ => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({ "error": "Failed to fetch day data" }))
         )
     }
 }

@@ -7,6 +7,7 @@ export default defineConfig({
 	server: {
 		proxy: {
 			'/data': 'http://localhost:8080',
+			'/day': 'http://localhost:8080',
 			'/upload': 'http://localhost:8080',
 			'/update': 'http://localhost:8080',
 			'/delete': 'http://localhost:8080'
