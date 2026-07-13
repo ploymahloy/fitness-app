@@ -4,6 +4,7 @@
 		CardioInput,
 		DayData,
 		DayWeightSession,
+		ExerciseSet,
 		NutritionInput,
 		WeightSessionInput
 	} from '$lib/types';
@@ -51,6 +52,9 @@
 				: [{ name: '', sets: [{ weight_in_pounds: 0, repetitions: 0 }] }]
 	});
 
+	const formatSet = (set: ExerciseSet) =>
+		`${set.weight_in_pounds ?? 0} lb × ${set.repetitions ?? 0} reps`;
+
 	const toWeightSessionInput = (session: DayWeightSession): WeightSessionInput => ({
 		name: session.name ?? '',
 		exercises: session.exercises.map((exercise) => ({
@@ -77,6 +81,9 @@
 
 	let weightEditor = $state<'create' | number | null>(null);
 	let weightForm = $state<DayWeightSession>(emptyWeightSession());
+	let weightFormEditing = $state(false);
+	let editingSet = $state<{ exerciseIndex: number; setIndex: number } | null>(null);
+	let editingExercise = $state<number | null>(null);
 	let savingWeight = $state(false);
 	let editMode = $state(false);
 
@@ -84,10 +91,19 @@
 		dayData !== null && (dayData.nutrition.calories > 0 || dayData.nutrition.protein > 0)
 	);
 
+	const weightSessionInEditMode = $derived(weightEditor === 'create' || weightFormEditing);
+
+	const clearWeightEditorState = () => {
+		weightFormEditing = false;
+		editingSet = null;
+		editingExercise = null;
+	};
+
 	const toggleEditMode = () => {
 		editMode = !editMode;
 		cardioEditor = null;
 		weightEditor = null;
+		clearWeightEditorState();
 	};
 
 	const loadDay = async (date: string) => {
@@ -95,6 +111,7 @@
 		errorMessage = '';
 		cardioEditor = null;
 		weightEditor = null;
+		clearWeightEditorState();
 
 		try {
 			const data = (await apiRequest(`/day/${date}`, 'GET')) as DayData;
@@ -204,6 +221,8 @@
 
 	const openWeightCreate = () => {
 		weightEditor = 'create';
+		weightFormEditing = true;
+		editingSet = null;
 		weightForm = emptyWeightSession();
 	};
 
@@ -212,11 +231,13 @@
 		if (!session) return;
 
 		weightEditor = id;
+		clearWeightEditorState();
 		weightForm = copyWeightSession(session);
 	};
 
 	const cancelWeight = () => {
 		weightEditor = null;
+		clearWeightEditorState();
 	};
 
 	const saveWeight = async () => {
@@ -231,6 +252,7 @@
 				await apiRequest(`/weight-sessions/${weightEditor}`, 'PUT', body);
 			}
 			weightEditor = null;
+			clearWeightEditorState();
 			await loadDay(selectedDate);
 		} catch (error) {
 			errorMessage = getErrorMessage(error);
@@ -248,6 +270,7 @@
 		try {
 			await apiRequest(`/weight-sessions/${weightEditor}`, 'DELETE');
 			weightEditor = null;
+			clearWeightEditorState();
 			await loadDay(selectedDate);
 		} catch (error) {
 			errorMessage = getErrorMessage(error);
@@ -257,19 +280,52 @@
 	};
 
 	const addExercise = () => {
+		const exerciseIndex = weightForm.exercises.length;
 		weightForm.exercises.push({ name: '', sets: [{ weight_in_pounds: 0, repetitions: 0 }] });
+		if (weightEditor !== 'create' && !weightFormEditing) {
+			editingExercise = exerciseIndex;
+			editingSet = { exerciseIndex, setIndex: 0 };
+		}
 	};
 
 	const removeExercise = (index: number) => {
 		weightForm.exercises.splice(index, 1);
+		if (editingExercise !== null) {
+			if (editingExercise === index) {
+				editingExercise = null;
+			} else if (editingExercise > index) {
+				editingExercise -= 1;
+			}
+		}
+		if (editingSet !== null) {
+			if (editingSet.exerciseIndex === index) {
+				editingSet = null;
+			} else if (editingSet.exerciseIndex > index) {
+				editingSet = { exerciseIndex: editingSet.exerciseIndex - 1, setIndex: editingSet.setIndex };
+			}
+		}
 	};
 
 	const addSet = (exerciseIndex: number) => {
+		const setIndex = weightForm.exercises[exerciseIndex].sets.length;
 		weightForm.exercises[exerciseIndex].sets.push({ weight_in_pounds: 0, repetitions: 0 });
+		if (weightEditor !== 'create' && !weightFormEditing) {
+			editingSet = { exerciseIndex, setIndex };
+			if (editingExercise !== exerciseIndex) {
+				editingExercise = null;
+			}
+		}
 	};
 
 	const removeSet = (exerciseIndex: number, setIndex: number) => {
 		weightForm.exercises[exerciseIndex].sets.splice(setIndex, 1);
+		if (editingSet?.exerciseIndex === exerciseIndex) {
+			if (editingSet.setIndex === setIndex) {
+				editingSet = null;
+			} else if (editingSet.setIndex > setIndex) {
+				editingSet = { exerciseIndex, setIndex: editingSet.setIndex - 1 };
+			}
+		}
 	};
 
 	const updateExerciseName = (exerciseIndex: number, name: string) => {
@@ -493,110 +549,205 @@
 							saveWeight();
 						}}
 					>
-						<h3 class="text-base font-medium">
-							{weightEditor === 'create' ? 'New weight session' : 'Edit weight session'}
-						</h3>
+						{#if weightSessionInEditMode}
+							<h3 class="text-base font-medium">
+								{weightEditor === 'create' ? 'New weight session' : 'Edit weight session'}
+							</h3>
 
-						<label class="flex flex-col gap-1">
-							<span class="text-sm text-gray-400">Session name</span>
-							<input type="text" required class={inputClass} bind:value={weightForm.name} />
-						</label>
+							<label class="flex flex-col gap-1">
+								<span class="text-sm text-gray-400">Session name</span>
+								<input type="text" required class={inputClass} bind:value={weightForm.name} />
+							</label>
 
-						<div class="flex flex-col gap-5">
-							{#each weightForm.exercises as exercise, exerciseIndex}
-								<div class="min-w-0 border-t border-gray-800 pt-4 first:border-t-0 first:pt-0">
-									<div class="mb-3 flex min-w-0 items-start gap-2">
-										<label class="flex min-w-0 flex-1 flex-col gap-1">
-											<span class="text-sm text-gray-400">Exercise</span>
-											<input
-												type="text"
-												required
-												placeholder="Exercise name"
-												class={inputClass}
-												value={exercise.name}
-												oninput={(event) =>
-													updateExerciseName(
-														exerciseIndex,
-														(event.currentTarget as HTMLInputElement).value
-													)}
-											/>
-										</label>
-										{#if weightForm.exercises.length > 1}
-											<button
-												type="button"
-												class="mt-6 shrink-0 rounded-lg px-2 py-2 text-sm text-red-400"
-												onclick={() => removeExercise(exerciseIndex)}
-											>
-												Remove
-											</button>
+							<div class="flex flex-col gap-5">
+								{#each weightForm.exercises as exercise, exerciseIndex}
+									<div class="min-w-0 border-t border-gray-800 pt-4 first:border-t-0 first:pt-0">
+										<div class="mb-3 flex min-w-0 items-start gap-2">
+											<label class="flex min-w-0 flex-1 flex-col gap-1">
+												<span class="text-sm text-gray-400">Exercise</span>
+												<input
+													type="text"
+													required
+													placeholder="Exercise name"
+													class={inputClass}
+													value={exercise.name}
+													oninput={(event) =>
+														updateExerciseName(
+															exerciseIndex,
+															(event.currentTarget as HTMLInputElement).value
+														)}
+												/>
+											</label>
+											{#if weightForm.exercises.length > 1}
+												<button
+													type="button"
+													class="mt-6 shrink-0 rounded-lg px-2 py-2 text-sm text-red-400"
+													onclick={() => removeExercise(exerciseIndex)}
+												>
+													Remove
+												</button>
+											{/if}
+										</div>
+
+										<div class="flex flex-col gap-3">
+											{#each exercise.sets as set, setIndex}
+												<div class="min-w-0 rounded-lg bg-gray-900 p-3">
+													<div class="grid min-w-0 grid-cols-3 gap-3">
+														<label class="flex min-w-0 flex-col gap-1">
+															<span class="text-xs text-gray-400">Weight (lb)</span>
+															<input
+																type="number"
+																min="0"
+																inputmode="numeric"
+																class={inputClass}
+																value={set.weight_in_pounds}
+																oninput={(event) =>
+																	updateSetValue(
+																		exerciseIndex,
+																		setIndex,
+																		'weight_in_pounds',
+																		(event.currentTarget as HTMLInputElement).value
+																	)}
+															/>
+														</label>
+														<label class="flex min-w-0 flex-col gap-1">
+															<span class="text-xs text-gray-400">Reps</span>
+															<input
+																type="number"
+																min="0"
+																inputmode="numeric"
+																class={inputClass}
+																value={set.repetitions}
+																oninput={(event) =>
+																	updateSetValue(
+																		exerciseIndex,
+																		setIndex,
+																		'repetitions',
+																		(event.currentTarget as HTMLInputElement).value
+																	)}
+															/>
+														</label>
+														{#if exercise.sets.length > 1}
+															<button
+																type="button"
+																class="text-sm text-red-400"
+																onclick={() => removeSet(exerciseIndex, setIndex)}
+															>
+																X
+															</button>
+														{/if}
+													</div>
+												</div>
+											{/each}
+										</div>
+
+										<button
+											type="button"
+											class="mt-3 min-h-11 w-full rounded-lg border border-gray-700 px-3 py-2 text-sm"
+											onclick={() => addSet(exerciseIndex)}
+										>
+											+ Add set
+										</button>
+									</div>
+								{/each}
+							</div>
+						{:else}
+							<div class="flex items-center justify-between gap-3">
+								<h3 class="min-w-0 truncate text-base font-medium">
+									{weightForm.name || 'Weight session'}
+								</h3>
+								<button
+									type="button"
+									class={btnGhost}
+									onclick={() => {
+										weightFormEditing = true;
+										editingSet = null;
+										editingExercise = null;
+									}}
+								>
+									Edit
+								</button>
+							</div>
+
+							<div class="flex flex-col gap-4">
+								{#each weightForm.exercises as exercise, exerciseIndex}
+									<div class="min-w-0 border-t border-gray-800 pt-3 first:border-t-0 first:pt-0">
+										{#if editingExercise === exerciseIndex}
+											<label class="flex flex-col gap-1">
+												<span class="text-sm text-gray-400">Exercise</span>
+												<input
+													type="text"
+													required
+													placeholder="Exercise name"
+													class={inputClass}
+													value={exercise.name}
+													oninput={(event) =>
+														updateExerciseName(
+															exerciseIndex,
+															(event.currentTarget as HTMLInputElement).value
+														)}
+												/>
+											</label>
+										{:else}
+											<p class="font-medium">{exercise.name || 'Unnamed exercise'}</p>
 										{/if}
+										<ul class="mt-1 flex flex-col gap-1">
+											{#each exercise.sets as set, setIndex}
+												{#if editingSet?.exerciseIndex === exerciseIndex && editingSet?.setIndex === setIndex}
+													<li>
+														<div class="grid min-w-0 grid-cols-2 gap-2">
+															<label class="flex min-w-0 flex-col gap-1">
+																<span class="text-xs text-gray-400">Weight (lb)</span>
+																<input
+																	type="number"
+																	min="0"
+																	inputmode="numeric"
+																	class={inputClass}
+																	value={set.weight_in_pounds}
+																	oninput={(event) =>
+																		updateSetValue(
+																			exerciseIndex,
+																			setIndex,
+																			'weight_in_pounds',
+																			(event.currentTarget as HTMLInputElement).value
+																		)}
+																/>
+															</label>
+															<label class="flex min-w-0 flex-col gap-1">
+																<span class="text-xs text-gray-400">Reps</span>
+																<input
+																	type="number"
+																	min="0"
+																	inputmode="numeric"
+																	class={inputClass}
+																	value={set.repetitions}
+																	oninput={(event) =>
+																		updateSetValue(
+																			exerciseIndex,
+																			setIndex,
+																			'repetitions',
+																			(event.currentTarget as HTMLInputElement).value
+																		)}
+																/>
+															</label>
+														</div>
+													</li>
+												{:else}
+													<li class="text-sm text-gray-400">{formatSet(set)}</li>
+												{/if}
+											{/each}
+										</ul>
+										<button
+											type="button"
+											class="mt-2 min-h-11 w-full rounded-lg border border-gray-700 px-3 py-2 text-sm"
+											onclick={() => addSet(exerciseIndex)}
+										>
+											+ Add set
+										</button>
 									</div>
-
-									<div class="flex flex-col gap-3">
-										{#each exercise.sets as set, setIndex}
-											<div class="min-w-0 rounded-lg bg-gray-900 p-3">
-												<div class="mb-2 flex items-center justify-between gap-2">
-													<span class="text-sm text-gray-400">Set {setIndex + 1}</span>
-													{#if exercise.sets.length > 1}
-														<button
-															type="button"
-															class="text-sm text-red-400"
-															onclick={() => removeSet(exerciseIndex, setIndex)}
-														>
-															Remove set
-														</button>
-													{/if}
-												</div>
-												<div class="grid min-w-0 grid-cols-2 gap-3">
-													<label class="flex min-w-0 flex-col gap-1">
-														<span class="text-xs text-gray-400">Weight (lb)</span>
-														<input
-															type="number"
-															min="0"
-															inputmode="numeric"
-															class={inputClass}
-															value={set.weight_in_pounds}
-															oninput={(event) =>
-																updateSetValue(
-																	exerciseIndex,
-																	setIndex,
-																	'weight_in_pounds',
-																	(event.currentTarget as HTMLInputElement).value
-																)}
-														/>
-													</label>
-													<label class="flex min-w-0 flex-col gap-1">
-														<span class="text-xs text-gray-400">Reps</span>
-														<input
-															type="number"
-															min="0"
-															inputmode="numeric"
-															class={inputClass}
-															value={set.repetitions}
-															oninput={(event) =>
-																updateSetValue(
-																	exerciseIndex,
-																	setIndex,
-																	'repetitions',
-																	(event.currentTarget as HTMLInputElement).value
-																)}
-														/>
-													</label>
-												</div>
-											</div>
-										{/each}
-									</div>
-
-									<button
-										type="button"
-										class="mt-3 min-h-11 w-full rounded-lg border border-gray-700 px-3 py-2 text-sm"
-										onclick={() => addSet(exerciseIndex)}
-									>
-										+ Add set
-									</button>
-								</div>
-							{/each}
-						</div>
+								{/each}
+							</div>
+						{/if}
 
 						<button type="button" class={btnSecondary} onclick={addExercise}>+ Add exercise</button>
 
