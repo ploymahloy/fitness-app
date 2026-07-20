@@ -356,11 +356,9 @@
 	const panelClass = 'flex flex-col gap-4 rounded-xl bg-gray-950 p-3 sm:p-4';
 </script>
 
-<main
-	class="mx-auto flex w-full min-w-0 max-w-md flex-col gap-4 overflow-x-hidden p-4 pb-8 sm:gap-6"
->
+<main class="mx-auto flex w-full min-w-0 max-w-md flex-col gap-4 overflow-x-hidden p-4 pb-8">
 	<header>
-		<div class="flex items-center gap-2">
+		<div class="flex items-center gap-4">
 			<button
 				type="button"
 				class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-700 bg-gray-900 text-lg"
@@ -387,7 +385,7 @@
 		{#if dayData && !loading}
 			<button
 				type="button"
-				class="mt-3 min-h-11 w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2.5 text-sm font-medium"
+				class="mt-4 min-h-11 w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2.5 text-sm font-medium"
 				onclick={toggleEditMode}
 			>
 				{editMode ? 'View day' : 'Edit day'}
@@ -520,7 +518,7 @@
 			<section class={sectionClass}>
 				{#if weightEditor === null}
 					<div class="mb-3 flex items-center justify-between gap-3">
-						<h2 class="text-lg font-medium">Weight Sessions</h2>
+						<h2 class="text-lg font-medium">Weight Session</h2>
 						<button type="button" class={btnGhost} onclick={openWeightCreate}>Add session</button>
 					</div>
 
@@ -815,7 +813,7 @@
 
 			{#if dayData.weight_sessions.length > 0}
 				<section class={sectionClass}>
-					<h2 class="mb-3 text-lg font-medium">Weight Sessions</h2>
+					<h2 class="mb-3 text-lg font-medium">Weight Session</h2>
 					<ul class="flex flex-col gap-3">
 						{#each dayData.weight_sessions as session}
 							<li class="font-medium">{session.name ?? 'Unnamed session'}</li>
