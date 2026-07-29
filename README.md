@@ -34,7 +34,7 @@
 ### Testing
 
 - Playwright:
-  - [ ] Single CRUD test (CRUD, in that order) --> covers majority of app function lol
+  - [x] Single CRUD test (CRUD, in that order) --> covers majority of app function lol
 - Rust:
   - [ ] Database migrations and constraints
   - [ ] API route handlers 
